@@ -31,8 +31,8 @@ export function getRunTypeForDate(programs: Program[], dateStr: string): { runTy
 export function getCalendarDays(year: number, month: number): string[] {
   const first = new Date(year, month, 1);
   const last = new Date(year, month + 1, 0);
-  const startPad = first.getDay();
-  const endPad = 6 - last.getDay();
+  const startPad = (first.getDay() + 6) % 7; // Mon=0 … Sun=6
+  const endPad = last.getDay() === 0 ? 0 : 7 - last.getDay();
   const days: string[] = [];
 
   for (let i = startPad; i > 0; i--) {

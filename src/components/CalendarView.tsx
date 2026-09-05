@@ -6,7 +6,7 @@ import { getRunTypeForDate, getCalendarDays, today } from '../utils/program';
 import { getRunType, RUN_TYPES } from '../data/runTypes';
 import type { DayStatus, RunType } from '../types';
 
-const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 const STATUS_ICON: Record<DayStatus, string> = {
   completed: '✓',
