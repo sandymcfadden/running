@@ -20,12 +20,16 @@ db.version(2).stores({
   const programs = await tx.table('programs').toArray();
   await tx.table('programs').clear();
   if (programs.length > 0) {
-    await tx.table('programs').bulkAdd(programs.map(({ id: _id, ...rest }) => rest));
+    await tx.table('programs').bulkAdd(
+      programs.map(({ id: _id, ...rest }) => ({ ...rest, id: crypto.randomUUID() }))
+    );
   }
   const dayLogs = await tx.table('dayLogs').toArray();
   await tx.table('dayLogs').clear();
   if (dayLogs.length > 0) {
-    await tx.table('dayLogs').bulkAdd(dayLogs.map(({ id: _id, ...rest }) => rest));
+    await tx.table('dayLogs').bulkAdd(
+      dayLogs.map(({ id: _id, ...rest }) => ({ ...rest, id: crypto.randomUUID() }))
+    );
   }
 });
 
