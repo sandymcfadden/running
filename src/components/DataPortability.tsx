@@ -57,7 +57,7 @@ export function DataPortability() {
     e.target.value = '';
   }
 
-  function stripId<T extends { id?: number }>({ id: _id, ...rest }: T): Omit<T, 'id'> {
+  function stripId<T extends { id?: string }>({ id: _id, ...rest }: T): Omit<T, 'id'> {
     return rest;
   }
 

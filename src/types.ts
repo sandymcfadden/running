@@ -13,7 +13,7 @@ export interface ProgramDay {
 }
 
 export interface Program {
-  id?: number;
+  id?: string;
   name: string;
   startDate: string; // YYYY-MM-DD — day 0 of the program
   days: ProgramDay[]; // days[0] = startDate, days[1] = startDate+1, etc.
@@ -23,7 +23,7 @@ export interface Program {
 export type DayStatus = 'completed' | 'partial' | 'skipped';
 
 export interface DayLog {
-  id?: number;
+  id?: string;
   date: string; // YYYY-MM-DD, unique index
   status?: DayStatus;
   runTypeOverride?: string;

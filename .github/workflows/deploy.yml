@@ -24,6 +24,8 @@ jobs:
           node-version: 20
       - run: npm install
       - run: npm run build
+        env:
+          VITE_DEXIE_CLOUD_URL: ${{ secrets.VITE_DEXIE_CLOUD_URL }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
