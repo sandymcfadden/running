@@ -20,7 +20,7 @@ type ImportMode = 'replace' | 'merge';
 
 export function DataPortability() {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [preview, setPreview] = useState<{ file: BackupFile; mode: ImportMode } | null>(null);
+  const [preview, setPreview] = useState<{ file: BackupFile; mode: ImportMode; programDates: string[] } | null>(null);
   const [importing, setImporting] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -50,7 +50,7 @@ export function DataPortability() {
       try {
         const parsed = JSON.parse(ev.target?.result as string);
         if (!isValidBackup(parsed)) { setError('Invalid backup file.'); return; }
-        setPreview({ file: parsed, mode: 'replace' });
+        setPreview({ file: parsed, mode: 'replace', programDates: parsed.programs.map(p => p.startDate) });
       } catch { setError('Could not parse file.'); }
     };
     reader.readAsText(file);
@@ -64,18 +64,21 @@ export function DataPortability() {
   async function confirmImport() {
     if (!preview) return;
     setImporting(true);
-    const { file, mode } = preview;
+    const { file, mode, programDates } = preview;
+    const programsWithDates = (file.programs.map(stripId) as Program[]).map(
+      (p, i) => ({ ...p, startDate: programDates[i] ?? p.startDate })
+    );
 
     if (mode === 'replace') {
       await db.transaction('rw', db.programs, db.dayLogs, async () => {
         await db.programs.clear();
         await db.dayLogs.clear();
-        await db.programs.bulkAdd(file.programs.map(stripId) as Program[]);
+        await db.programs.bulkAdd(programsWithDates);
         await db.dayLogs.bulkAdd(file.dayLogs.map(stripId) as DayLog[]);
       });
     } else {
       await db.transaction('rw', db.programs, db.dayLogs, async () => {
-        for (const p of file.programs.map(stripId) as Program[]) {
+        for (const p of programsWithDates) {
           const existing = await db.programs.where('startDate').equals(p.startDate).first();
           if (existing) await db.programs.update(existing.id!, { ...p } as Partial<Program>);
           else await db.programs.add(p);
@@ -123,7 +126,7 @@ export function DataPortability() {
               <strong>{preview.file.dayLogs.length}</strong> logged day(s) from{' '}
               {format(new Date(preview.file.exportedAt), 'MMM d, yyyy')}.
             </p>
-            <div className="space-y-2 mb-5">
+            <div className="space-y-2 mb-4">
               {(['replace', 'merge'] as ImportMode[]).map(m => (
                 <button
                   key={m}
@@ -137,6 +140,30 @@ export function DataPortability() {
                 </button>
               ))}
             </div>
+
+            {preview.file.programs.length > 0 && (
+              <div className="mb-5">
+                <p className="text-xs font-medium text-gray-600 mb-2">Program start dates</p>
+                <div className="space-y-2">
+                  {preview.file.programs.map((p, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <span className="flex-1 text-xs text-gray-700 truncate">{p.name}</span>
+                      <input
+                        type="date"
+                        value={preview.programDates[i]}
+                        onChange={e => setPreview(prev => {
+                          if (!prev) return prev;
+                          const dates = [...prev.programDates];
+                          dates[i] = e.target.value;
+                          return { ...prev, programDates: dates };
+                        })}
+                        className="px-2 py-1 rounded-lg border border-gray-200 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-400"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="flex gap-2">
               <button onClick={() => setPreview(null)} className="px-4 py-2 rounded-xl text-sm text-gray-500 hover:bg-gray-50">Cancel</button>
               <button onClick={confirmImport} disabled={importing} className="flex-1 py-2 rounded-xl bg-green-600 text-white text-sm font-medium disabled:opacity-40 hover:bg-green-700">
