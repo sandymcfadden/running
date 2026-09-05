@@ -27,6 +27,8 @@ export function DayDetail({ date, distanceUnit, onClose }: Props) {
   const [distanceInput, setDistanceInput] = useState('');
   const [durationH, setDurationH] = useState('');
   const [durationM, setDurationM] = useState('');
+  const [targetDurationInput, setTargetDurationInput] = useState('');
+  const [targetDistanceInput, setTargetDistanceInput] = useState('');
   const [notes, setNotes] = useState('');
   const [showTypePicker, setShowTypePicker] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -47,10 +49,18 @@ export function DayDetail({ date, distanceUnit, onClose }: Props) {
       } else {
         setDurationH(''); setDurationM('');
       }
+      setTargetDurationInput(log.targetDuration ?? '');
+      if (log.targetDistanceKm != null) {
+        const display = distanceUnit === 'mi' ? log.targetDistanceKm * 0.621371 : log.targetDistanceKm;
+        setTargetDistanceInput(display.toFixed(1));
+      } else {
+        setTargetDistanceInput('');
+      }
       setNotes(log.notes ?? '');
     } else {
       setStatus(null); setRunTypeOverride(null);
       setDistanceInput(''); setDurationH(''); setDurationM('');
+      setTargetDurationInput(''); setTargetDistanceInput('');
       setNotes('');
     }
     setShowTypePicker(false);
@@ -65,16 +75,17 @@ export function DayDetail({ date, distanceUnit, onClose }: Props) {
     return () => document.removeEventListener('keydown', handleKey);
   }, [handleKey]);
 
-  const { runType: scheduledType, targetDuration } = programs
+  const { runType: scheduledType, targetDuration, targetDistanceKm } = programs
     ? getRunTypeForDate(programs, date)
-    : { runType: null, targetDuration: undefined };
+    : { runType: null, targetDuration: undefined, targetDistanceKm: undefined };
 
   const hasOverride = runTypeOverride !== null && runTypeOverride !== scheduledType?.id;
   const displayType = runTypeOverride ? getRunType(runTypeOverride) : scheduledType;
+  const hasTargetInput = targetDurationInput.trim() !== '' || targetDistanceInput !== '';
 
   const todayStr = today();
   const isFuture = date > todayStr;
-  const canSave = status !== null || hasOverride;
+  const canSave = status !== null || hasOverride || hasTargetInput;
 
   async function save() {
     if (!canSave) return;
@@ -93,12 +104,20 @@ export function DayDetail({ date, distanceUnit, onClose }: Props) {
     const m = parseInt(durationM) || 0;
     if (h > 0 || m > 0) durationMinutes = h * 60 + m;
 
+    let targetDistanceKmSave: number | undefined;
+    const tdVal = parseFloat(targetDistanceInput);
+    if (!isNaN(tdVal) && tdVal > 0) {
+      targetDistanceKmSave = distanceUnit === 'mi' ? tdVal / 0.621371 : tdVal;
+    }
+
     const fields = {
       status: status ?? undefined,
       runTypeOverride: hasOverride ? runTypeOverride! : undefined,
       runTypeId: effectiveTypeId,
       distanceKm,
       durationMinutes,
+      targetDuration: targetDurationInput.trim() || undefined,
+      targetDistanceKm: targetDistanceKmSave,
       notes: notes.trim() || undefined,
       updatedAt: now,
     };
@@ -153,9 +172,6 @@ export function DayDetail({ date, distanceUnit, onClose }: Props) {
                   {showTypePicker ? 'Cancel' : 'Change'}
                 </button>
               </div>
-              {targetDuration && !hasOverride && (
-                <p className="text-xs text-gray-500 ml-5">Target: {targetDuration}</p>
-              )}
               <p className="text-xs text-gray-500 mt-1 ml-5">{displayType.description}</p>
             </div>
           ) : (
@@ -213,6 +229,40 @@ export function DayDetail({ date, distanceUnit, onClose }: Props) {
             </div>
           )}
         </div>
+
+        {/* Target duration + distance */}
+        {!showTypePicker && (
+          <div className="grid grid-cols-2 gap-2 mb-5">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">
+                Target duration
+              </label>
+              <input
+                type="text"
+                value={targetDurationInput}
+                onChange={e => setTargetDurationInput(e.target.value)}
+                placeholder={targetDuration ?? 'e.g. 45 min'}
+                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-400"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">
+                Target distance ({distanceUnit})
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="0.1"
+                value={targetDistanceInput}
+                onChange={e => setTargetDistanceInput(e.target.value)}
+                placeholder={targetDistanceKm != null
+                  ? String((distanceUnit === 'mi' ? targetDistanceKm * 0.621371 : targetDistanceKm).toFixed(1))
+                  : '0.0'}
+                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-400"
+              />
+            </div>
+          </div>
+        )}
 
         {/* Logging — past + today */}
         {!isFuture && (

@@ -8,23 +8,30 @@ interface Props {
   onClose: () => void;
 }
 
+interface DayEdit {
+  runTypeId: string;
+  targetDuration: string;
+  targetDistance: string; // in display unit; converted to km on save
+}
+
 const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const DEFAULT_WEEK: ProgramDay[] = [
-  { runTypeId: 'rest' },
-  { runTypeId: 'easy' },
-  { runTypeId: 'rest' },
-  { runTypeId: 'easy' },
-  { runTypeId: 'rest' },
-  { runTypeId: 'easy' },
-  { runTypeId: 'long-run' },
+const DEFAULT_WEEK: DayEdit[] = [
+  { runTypeId: 'rest',     targetDuration: '', targetDistance: '' },
+  { runTypeId: 'easy',     targetDuration: '', targetDistance: '' },
+  { runTypeId: 'rest',     targetDuration: '', targetDistance: '' },
+  { runTypeId: 'easy',     targetDuration: '', targetDistance: '' },
+  { runTypeId: 'rest',     targetDuration: '', targetDistance: '' },
+  { runTypeId: 'easy',     targetDuration: '', targetDistance: '' },
+  { runTypeId: 'long-run', targetDuration: '', targetDistance: '' },
 ];
 
 export function ProgramEditor({ onClose }: Props) {
   const [name, setName] = useState('');
   const [startDate, setStartDate] = useState(today());
-  const [weeks, setWeeks] = useState<ProgramDay[][]>([DEFAULT_WEEK.map(d => ({ ...d }))]);
+  const [weeks, setWeeks] = useState<DayEdit[][]>([DEFAULT_WEEK.map(d => ({ ...d }))]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const distanceUnit = (localStorage.getItem('distanceUnit') as 'km' | 'mi') ?? 'km';
 
   const handleKey = useCallback((e: KeyboardEvent) => {
     if (e.key === 'Escape') onClose();
@@ -43,10 +50,10 @@ export function ProgramEditor({ onClose }: Props) {
     setWeeks(w => w.filter((_, idx) => idx !== i));
   }
 
-  function setDayType(weekIdx: number, dayIdx: number, runTypeId: string) {
+  function updateDay(weekIdx: number, dayIdx: number, patch: Partial<DayEdit>) {
     setWeeks(w => w.map((week, wi) =>
       wi === weekIdx
-        ? week.map((day, di) => di === dayIdx ? { ...day, runTypeId } : day)
+        ? week.map((day, di) => di === dayIdx ? { ...day, ...patch } : day)
         : week
     ));
   }
@@ -56,7 +63,17 @@ export function ProgramEditor({ onClose }: Props) {
     if (weeks.length === 0) { setError('Add at least one week.'); return; }
 
     setSaving(true);
-    const days: ProgramDay[] = weeks.flat();
+    const days: ProgramDay[] = weeks.flat().map(d => {
+      const distVal = parseFloat(d.targetDistance);
+      const targetDistanceKm = !isNaN(distVal) && distVal > 0
+        ? (distanceUnit === 'mi' ? distVal / 0.621371 : distVal)
+        : undefined;
+      return {
+        runTypeId: d.runTypeId,
+        targetDuration: d.targetDuration.trim() || undefined,
+        targetDistanceKm,
+      };
+    });
     await db.programs.add({
       name: name.trim() || `Program from ${startDate}`,
       startDate,
@@ -125,12 +142,13 @@ export function ProgramEditor({ onClose }: Props) {
                   <div className="grid grid-cols-7 gap-1">
                     {WEEK_DAYS.map((label, di) => {
                       const rt = RUN_TYPES.find(r => r.id === week[di].runTypeId);
+                      const isRest = week[di].runTypeId === 'rest';
                       return (
                         <div key={di} className="flex flex-col items-center gap-1">
                           <span className="text-[10px] text-gray-400 font-medium">{label}</span>
                           <select
                             value={week[di].runTypeId}
-                            onChange={e => setDayType(wi, di, e.target.value)}
+                            onChange={e => updateDay(wi, di, { runTypeId: e.target.value })}
                             className="w-full text-[10px] rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-green-400 p-0.5"
                             style={{ backgroundColor: (rt?.color ?? '#e5e7eb') + '33' }}
                           >
@@ -138,6 +156,28 @@ export function ProgramEditor({ onClose }: Props) {
                               <option key={r.id} value={r.id}>{r.name}</option>
                             ))}
                           </select>
+                          {!isRest && (
+                            <>
+                              <input
+                                type="text"
+                                value={week[di].targetDuration}
+                                onChange={e => updateDay(wi, di, { targetDuration: e.target.value })}
+                                placeholder="dur"
+                                title="Target duration (e.g. 45 min)"
+                                className="w-full text-[10px] rounded-lg border border-gray-200 px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-green-400 placeholder-gray-300"
+                              />
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.1"
+                                value={week[di].targetDistance}
+                                onChange={e => updateDay(wi, di, { targetDistance: e.target.value })}
+                                placeholder={distanceUnit}
+                                title={`Target distance (${distanceUnit})`}
+                                className="w-full text-[10px] rounded-lg border border-gray-200 px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-green-400 placeholder-gray-300"
+                              />
+                            </>
+                          )}
                         </div>
                       );
                     })}

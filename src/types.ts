@@ -9,6 +9,7 @@ export interface RunType {
 export interface ProgramDay {
   runTypeId: string;
   targetDuration?: string; // e.g. "50–70 min"
+  targetDistanceKm?: number;
 }
 
 export interface Program {
@@ -29,6 +30,8 @@ export interface DayLog {
   runTypeId?: string; // effective type snapshotted at save time
   distanceKm?: number;
   durationMinutes?: number;
+  targetDuration?: string;
+  targetDistanceKm?: number;
   notes?: string;
   updatedAt: string;
 }
