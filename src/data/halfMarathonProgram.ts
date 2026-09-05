@@ -1,11 +1,10 @@
 import type { Program } from '../types';
 
-// 10-week half marathon training program
-// Source: Half Training Google Calendar export, Aug 4 – Oct 12, 2025
-// days[0] = 2025-08-04 (Monday), days[69] = 2025-10-12 (race day)
-export const HALF_MARATHON_PROGRAM: Omit<Program, 'id' | 'createdAt'> = {
+// 10-week half marathon training program (70 days)
+// Source: Half Training Google Calendar export
+// days[0] = chosen start date (Monday recommended), days[69] = race day
+export const HALF_MARATHON_PROGRAM: Omit<Program, 'id' | 'createdAt' | 'startDate'> = {
   name: 'Half Marathon — 10 Week',
-  startDate: '2025-08-04',
   days: [
     // Week 1: Aug 4–10
     { runTypeId: 'rest' },                                    // Mon Aug 4

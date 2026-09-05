@@ -64,6 +64,7 @@ function ProgramCard({ program, isCurrent, onDelete }: {
 
 export function ProgramList() {
   const [showEditor, setShowEditor] = useState(false);
+  const [hmStartDate, setHmStartDate] = useState<string | null>(null);
   const todayStr = today();
 
   const programs = useLiveQuery(
@@ -76,10 +77,10 @@ export function ProgramList() {
     return p.startDate <= todayStr && todayStr <= endDate;
   }) ?? null;
 
-  async function addHalfMarathon() {
-    const exists = await db.programs.where('startDate').equals(HALF_MARATHON_PROGRAM.startDate).count();
-    if (exists) return;
-    await db.programs.add({ ...HALF_MARATHON_PROGRAM, createdAt: new Date().toISOString() });
+  async function confirmHalfMarathon() {
+    if (!hmStartDate) return;
+    await db.programs.add({ ...HALF_MARATHON_PROGRAM, startDate: hmStartDate, createdAt: new Date().toISOString() });
+    setHmStartDate(null);
   }
 
   async function deleteProgram(p: Program) {
@@ -106,7 +107,7 @@ export function ProgramList() {
           <p className="font-medium text-gray-600">No programs yet</p>
           <p className="text-sm mt-1 mb-4">Create your own or load the built-in half marathon plan.</p>
           <button
-            onClick={addHalfMarathon}
+            onClick={() => setHmStartDate(todayStr)}
             className="px-5 py-2 rounded-xl bg-green-600 text-white text-sm font-medium hover:bg-green-700 transition-colors"
           >
             Load Half Marathon Program
@@ -127,11 +128,42 @@ export function ProgramList() {
 
       {(programs?.length ?? 0) > 0 && (
         <button
-          onClick={addHalfMarathon}
+          onClick={() => setHmStartDate(todayStr)}
           className="mt-3 w-full py-2 rounded-xl border-2 border-dashed border-gray-200 text-sm text-gray-400 hover:border-green-300 hover:text-green-600 transition-colors"
         >
           + Load Half Marathon Program
         </button>
+      )}
+
+      {hmStartDate !== null && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-xs">
+            <h3 className="font-semibold text-gray-900 mb-1">Half Marathon Program</h3>
+            <p className="text-sm text-gray-500 mb-4">Choose a start date (Monday recommended). The 10-week plan runs for 70 days.</p>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Start date</label>
+            <input
+              type="date"
+              value={hmStartDate}
+              onChange={e => setHmStartDate(e.target.value)}
+              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-green-400"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={() => setHmStartDate(null)}
+                className="flex-1 py-2 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmHalfMarathon}
+                disabled={!hmStartDate}
+                className="flex-1 py-2 rounded-xl bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-40 transition-colors"
+              >
+                Load Program
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       <div className="mt-6 p-4 bg-gray-50 rounded-2xl text-xs text-gray-500 space-y-1">
