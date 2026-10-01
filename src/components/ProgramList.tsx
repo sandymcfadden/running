@@ -79,7 +79,7 @@ export function ProgramList() {
 
   async function confirmHalfMarathon() {
     if (!hmStartDate) return;
-    await db.programs.add({ ...HALF_MARATHON_PROGRAM, startDate: hmStartDate, createdAt: new Date().toISOString() });
+    await db.programs.add({ ...HALF_MARATHON_PROGRAM, id: crypto.randomUUID(), startDate: hmStartDate, createdAt: new Date().toISOString() });
     setHmStartDate(null);
   }
 
@@ -100,6 +100,12 @@ export function ProgramList() {
           + New
         </button>
       </div>
+
+      {programs === undefined && (
+        <div className="text-center py-10 text-gray-300">
+          <p className="text-sm">Loading…</p>
+        </div>
+      )}
 
       {programs?.length === 0 && (
         <div className="text-center py-10 text-gray-400">

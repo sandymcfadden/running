@@ -10,6 +10,7 @@ export interface ProgramDay {
   runTypeId: string;
   targetDuration?: string; // e.g. "50–70 min"
   targetDistanceKm?: number;
+  description?: string; // workout structure and coaching notes
 }
 
 export interface Program {

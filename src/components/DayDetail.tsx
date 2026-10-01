@@ -75,9 +75,9 @@ export function DayDetail({ date, distanceUnit, onClose }: Props) {
     return () => document.removeEventListener('keydown', handleKey);
   }, [handleKey]);
 
-  const { runType: scheduledType, targetDuration, targetDistanceKm } = programs
+  const { runType: scheduledType, targetDuration, targetDistanceKm, description } = programs
     ? getRunTypeForDate(programs, date)
-    : { runType: null, targetDuration: undefined, targetDistanceKm: undefined };
+    : { runType: null, targetDuration: undefined, targetDistanceKm: undefined, description: undefined };
 
   const hasOverride = runTypeOverride !== null && runTypeOverride !== scheduledType?.id;
   const displayType = runTypeOverride ? getRunType(runTypeOverride) : scheduledType;
@@ -125,7 +125,7 @@ export function DayDetail({ date, distanceUnit, onClose }: Props) {
     if (log) {
       await db.dayLogs.update(log.id!, fields);
     } else {
-      await db.dayLogs.add({ date, ...fields });
+      await db.dayLogs.add({ id: crypto.randomUUID(), date, ...fields });
     }
     setSaving(false);
     onClose();
@@ -174,7 +174,17 @@ export function DayDetail({ date, distanceUnit, onClose }: Props) {
               </div>
               <p className="text-xs text-gray-500 mt-1 ml-5">{displayType.description}</p>
             </div>
-          ) : (
+          ) : null}
+
+          {!showTypePicker && description && (
+            <div className="mt-2 px-3 py-2.5 rounded-xl bg-gray-50 border border-gray-100">
+              {description.split('\n\n').map((para, i) => (
+                <p key={i} className={`text-xs text-gray-600 leading-relaxed ${i > 0 ? 'mt-2' : ''}`}>{para}</p>
+              ))}
+            </div>
+          )}
+
+          {!displayType && (
             <div className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-gray-100">
               <p className="text-sm text-gray-500">No program for this day</p>
               <button

@@ -2,7 +2,9 @@ import Dexie, { type Table } from 'dexie';
 import dexieCloud from 'dexie-cloud-addon';
 import type { Program, DayLog } from '../types';
 
-const db = new Dexie('RunningCalendarDB', { addons: [dexieCloud] }) as Dexie & {
+const cloudUrl = import.meta.env.VITE_DEXIE_CLOUD_URL as string | undefined;
+
+const db = new Dexie('RunningCalendarDB', { addons: cloudUrl ? [dexieCloud] : [] }) as Dexie & {
   programs: Table<Program, string>;
   dayLogs: Table<DayLog, string>;
 };
@@ -12,10 +14,10 @@ db.version(1).stores({
   dayLogs: '++id, &date',
 });
 
-// Migrate from auto-increment integer ids to Dexie Cloud UUID string ids
+// Migrate integer ids to UUID strings
 db.version(2).stores({
-  programs: '@id, startDate',
-  dayLogs: '@id, &date',
+  programs: '&id, startDate',
+  dayLogs: '&id, &date',
 }).upgrade(async tx => {
   const programs = await tx.table('programs').toArray();
   await tx.table('programs').clear();
@@ -33,9 +35,9 @@ db.version(2).stores({
   }
 });
 
-if (import.meta.env.VITE_DEXIE_CLOUD_URL) {
+if (cloudUrl) {
   db.cloud.configure({
-    databaseUrl: import.meta.env.VITE_DEXIE_CLOUD_URL,
+    databaseUrl: cloudUrl,
     requireAuth: false,
   });
 }

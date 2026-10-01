@@ -73,20 +73,20 @@ export function DataPortability() {
       await db.transaction('rw', db.programs, db.dayLogs, async () => {
         await db.programs.clear();
         await db.dayLogs.clear();
-        await db.programs.bulkAdd(programsWithDates);
-        await db.dayLogs.bulkAdd(file.dayLogs.map(stripId) as DayLog[]);
+        await db.programs.bulkAdd(programsWithDates.map(p => ({ ...p, id: crypto.randomUUID() })));
+        await db.dayLogs.bulkAdd((file.dayLogs.map(stripId) as DayLog[]).map(l => ({ ...l, id: crypto.randomUUID() })));
       });
     } else {
       await db.transaction('rw', db.programs, db.dayLogs, async () => {
         for (const p of programsWithDates) {
           const existing = await db.programs.where('startDate').equals(p.startDate).first();
           if (existing) await db.programs.update(existing.id!, { ...p } as Partial<Program>);
-          else await db.programs.add(p);
+          else await db.programs.add({ ...p, id: crypto.randomUUID() });
         }
         for (const l of file.dayLogs.map(stripId) as DayLog[]) {
           const existing = await db.dayLogs.where('date').equals(l.date).first();
           if (existing) await db.dayLogs.update(existing.id!, { ...l } as Partial<DayLog>);
-          else await db.dayLogs.add(l);
+          else await db.dayLogs.add({ ...l, id: crypto.randomUUID() });
         }
       });
     }

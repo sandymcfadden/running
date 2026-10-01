@@ -75,6 +75,7 @@ export function ProgramEditor({ onClose }: Props) {
       };
     });
     await db.programs.add({
+      id: crypto.randomUUID(),
       name: name.trim() || `Program from ${startDate}`,
       startDate,
       days,
