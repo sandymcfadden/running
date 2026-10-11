@@ -181,7 +181,7 @@ export function DayDetail({ date, distanceUnit, onClose }: Props) {
             </div>
           ) : null}
 
-          {!showTypePicker && description && (
+          {!showTypePicker && !hasOverride && description && (
             <div className="mt-2 px-3 py-2.5 rounded-xl bg-gray-50 border border-gray-100">
               {description.split('\n\n').map((para, i) => (
                 <p key={i} className={`text-xs text-gray-600 leading-relaxed ${i > 0 ? 'mt-2' : ''}`}>{para}</p>
