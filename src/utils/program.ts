@@ -7,7 +7,7 @@ function parseLocal(dateStr: string): Date {
   return new Date(y, m - 1, d);
 }
 
-export function getRunTypeForDate(programs: Program[], dateStr: string): { runType: RunType | null; targetDuration?: string; targetDistanceKm?: number; description?: string } {
+export function getRunTypeForDate(programs: Program[], dateStr: string): { runType: RunType | null; targetDuration?: string; targetDistanceKm?: number; description?: string; weekNum?: number; dayNum?: number } {
   if (!programs.length) return { runType: null };
 
   const applicable = programs
@@ -25,7 +25,9 @@ export function getRunTypeForDate(programs: Program[], dateStr: string): { runTy
 
   const day = program.days[dayOffset];
   const runType = RUN_TYPES.find(t => t.id === day.runTypeId) ?? null;
-  return { runType, targetDuration: day.targetDuration, targetDistanceKm: day.targetDistanceKm, description: day.description };
+  const weekNum = Math.floor(dayOffset / 7) + 1;
+  const dayNum = (dayOffset % 7) + 1;
+  return { runType, targetDuration: day.targetDuration, targetDistanceKm: day.targetDistanceKm, description: day.description, weekNum, dayNum };
 }
 
 export function getCalendarDays(year: number, month: number): string[] {

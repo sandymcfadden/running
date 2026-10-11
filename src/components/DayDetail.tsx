@@ -75,9 +75,9 @@ export function DayDetail({ date, distanceUnit, onClose }: Props) {
     return () => document.removeEventListener('keydown', handleKey);
   }, [handleKey]);
 
-  const { runType: scheduledType, targetDuration, targetDistanceKm, description } = programs
+  const { runType: scheduledType, targetDuration, targetDistanceKm, description, weekNum, dayNum } = programs
     ? getRunTypeForDate(programs, date)
-    : { runType: null, targetDuration: undefined, targetDistanceKm: undefined, description: undefined };
+    : { runType: null, targetDuration: undefined, targetDistanceKm: undefined, description: undefined, weekNum: undefined, dayNum: undefined };
 
   const hasOverride = runTypeOverride !== null && runTypeOverride !== scheduledType?.id;
   const displayType = runTypeOverride ? getRunType(runTypeOverride) : scheduledType;
@@ -147,7 +147,12 @@ export function DayDetail({ date, distanceUnit, onClose }: Props) {
 
         <div className="flex items-start justify-between mb-4">
           <div>
-            <p className="text-xs text-gray-500 uppercase tracking-wide">{format(parseISO(date), 'EEEE')}</p>
+            <p className="text-xs text-gray-500 uppercase tracking-wide">
+              {format(parseISO(date), 'EEEE')}
+              {weekNum != null && (
+                <span className="ml-2 normal-case not-uppercase">· Week {weekNum}, Day {dayNum}</span>
+              )}
+            </p>
             <h3 className="text-xl font-semibold text-gray-900">{format(parseISO(date), 'MMMM d, yyyy')}</h3>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1 -mt-1 -mr-1 rounded-lg">✕</button>
