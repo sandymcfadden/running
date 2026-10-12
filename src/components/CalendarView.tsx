@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { format, addMonths, subMonths } from 'date-fns';
+import { StatsBar } from './StatsBar';
 import { db } from '../db/db';
 import { getRunTypeForDate, getCalendarDays, today } from '../utils/program';
 import { getRunType, RUN_TYPES } from '../data/runTypes';
@@ -155,6 +156,8 @@ export function CalendarView({ onDayClick }: Props) {
           <span className="text-xs text-gray-500">✓ Completed &nbsp; ~ Partial &nbsp; ✗ Skipped</span>
         </div>
       </div>
+
+      <StatsBar />
     </div>
   );
 }
